@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Moon, Sun, BookOpen, TrendingUp, Calendar, Tag, Loader2, AlertCircle } from 'lucide-react';
 
-// Para el artifact, usaremos una variable temporal
-// En tu proyecto local, esto funcionará con import.meta.env.VITE_NEWS_API_KEY
-const API_KEY = import.meta.env.VITE_NEWS_API_KEY;  // Reemplaza con tu API key real
-const API_URL = 'https://newsapi.org/v2/everything';
+const API_KEY = import.meta.env.VITE_NEWS_API_KEY;
+const API_URL = 'https://gnews.io/api/v4/search';
 
 const categories = ["Todas", "GPT", "Machine Learning", "Deep Learning", "Computer Vision", "NLP", "Robotics", "AI Ethics", "Quantum Computing"];
 
@@ -31,7 +29,7 @@ function App() {
     try {
       const searchQuery = query || "artificial intelligence";
       const response = await fetch(
-        `${API_URL}?q=${searchQuery}&language=en&sortBy=publishedAt&pageSize=20&apiKey=${API_KEY}`
+        `${API_URL}?q=${searchQuery}&lang=en&sortby=publishedAt&max=20&apikey=${API_KEY}`
       );
       
       if (!response.ok) {
@@ -44,10 +42,10 @@ function App() {
         id: index + 1,
         title: article.title,
         summary: article.description || "Sin descripción disponible",
-        image: article.urlToImage || "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80",
+        image: article.image || "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80",
         date: article.publishedAt.split('T')[0],
         category: assignCategory(article.title + " " + article.description),
-        content: article.content || article.description,
+        content: article.description || "Contenido no disponible",
         url: article.url,
         source: article.source.name
       }));
@@ -173,7 +171,7 @@ function App() {
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
       {showToast && (
         <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce">
-          ¡Suscripción exitosa! 🎉
+          ¡Suscripción exitosa!
         </div>
       )}
 
