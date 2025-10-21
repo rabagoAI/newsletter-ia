@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Moon, Sun, BookOpen, TrendingUp, Calendar, Tag, Loader2, AlertCircle } from 'lucide-react';
 
-const API_KEY = import.meta.env.VITE_NEWS_API_KEY;
-const API_URL = 'https://gnews.io/api/v4/search';
+// Usa NewsAPI.org en lugar de newsdata.io - es más confiable
+// Regístrate gratis en https://newsapi.org y obtén tu clave
+const API_KEY = "6be6bfaf313740028953e0930bbc2771"; // Reemplaza con tu clave de newsapi.org
+const API_URL = 'https://newsapi.org/v2/everything';
 
 const categories = ["Todas", "GPT", "Machine Learning", "Deep Learning", "Computer Vision", "NLP", "Robotics", "AI Ethics", "Quantum Computing"];
 
@@ -18,46 +20,6 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    fetchNews();
-  }, []);
-
-  const fetchNews = async (query = "artificial intelligence") => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const searchQuery = query || "artificial intelligence";
-      const response = await fetch(
-        `${API_URL}?q=${searchQuery}&lang=en&sortby=publishedAt&max=20&apikey=${API_KEY}`
-      );
-      
-      if (!response.ok) {
-        throw new Error('Error al cargar las noticias');
-      }
-      
-      const data = await response.json();
-      
-      const formattedNews = data.articles.map((article, index) => ({
-        id: index + 1,
-        title: article.title,
-        summary: article.description || "Sin descripción disponible",
-        image: article.image || "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80",
-        date: article.publishedAt.split('T')[0],
-        category: assignCategory(article.title + " " + article.description),
-        content: article.description || "Contenido no disponible",
-        url: article.url,
-        source: article.source.name
-      }));
-      
-      setNews(formattedNews);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const assignCategory = (text) => {
     const lowerText = text.toLowerCase();
     if (lowerText.includes('gpt') || lowerText.includes('chatgpt') || lowerText.includes('openai')) return 'GPT';
@@ -71,10 +33,58 @@ function App() {
     return 'Machine Learning';
   };
 
+  const fetchNews = async (query = "artificial intelligence") => {
+    setLoading(true);
+    setError(null);
+    
+    if (!API_KEY || API_KEY === "b7d6e4c9a8f1e3b2c5d9a7f4e1b8c3d6") {
+      setError("Error: Debes añadir tu clave API de newsapi.org (regístrate gratis en https://newsapi.org)");
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      const searchQuery = query || "artificial intelligence";
+      const response = await fetch(
+        `${API_URL}?q=${searchQuery}&language=en&sortBy=publishedAt&pageSize=20&apiKey=${API_KEY}`
+      );
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(`Error ${response.status}: ${data.message || 'No autorizado. Verifica tu clave API.'}`);
+      }
+      
+      const data = await response.json();
+      const articles = data.articles || [];
+      
+      const formattedNews = articles.map((article, index) => ({
+        id: index + 1,
+        title: article.title,
+        summary: article.description || "Sin descripción disponible",
+        image: article.urlToImage || "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80",
+        date: article.publishedAt ? article.publishedAt.split('T')[0] : new Date().toISOString().split('T')[0],
+        category: assignCategory(article.title + " " + (article.description || "")),
+        content: article.content || article.description || "Contenido no disponible",
+        url: article.url,
+        source: article.source.name || 'Desconocida'
+      }));
+      
+      setNews(formattedNews);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNews();
+  }, []);
+
   const filteredNews = news.filter(article => {
     const matchesCategory = selectedCategory === "Todas" || article.category === selectedCategory;
     const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         article.summary.toLowerCase().includes(searchTerm.toLowerCase());
+                          article.summary.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
@@ -94,7 +104,7 @@ function App() {
 
   const handleSearch = (term) => {
     setSearchTerm(term);
-    if (term.length > 2) {
+    if (term.length > 2 || term.length === 0) {
       fetchNews(term);
     }
   };
@@ -319,7 +329,7 @@ function App() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className={`w-full px-4 py-2 rounded-lg outline-none ${
-                      darkMode ? 'bg-gray-700' : 'bg-gray-100'
+                      darkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-900'
                     }`}
                   />
                   <input 
@@ -328,7 +338,7 @@ function App() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className={`w-full px-4 py-2 rounded-lg outline-none ${
-                      darkMode ? 'bg-gray-700' : 'bg-gray-100'
+                      darkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-900'
                     }`}
                   />
                   <button 
